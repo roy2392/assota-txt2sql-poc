@@ -1,30 +1,30 @@
-
 # Assuta Text-to-SQL Chatbot
 
-This project is a simple web-based chatbot that allows users to ask questions in Hebrew about their appointments. The chatbot uses Google's Gemini Pro model to understand natural language queries and retrieve information from a SQLite database.
+This project is a simple web-based chatbot that allows users to ask questions in Hebrew about their appointments. The chatbot uses Google's Gemini API to understand natural language queries and retrieve information from a SQLite database.
 
 ## Features
 
--   **Natural Language Understanding:** Uses the Gemini Pro API to interpret user questions.
+-   **Natural Language Understanding:** Uses the Gemini API to interpret user questions.
 -   **Database Integration:** Connects to a SQLite database to fetch appointment data.
 -   **Web-Based UI:** Provides a simple and clean chat interface using Flask and Bootstrap.
--   **Hebrew Language Support:** The chatbot is configured to respond in Hebrew.
+-   **Hebrew Language Support:** The chatbot is configured to respond in Hebrew using a system prompt.
+-   **Dockerized:** Includes a Dockerfile for easy containerization and deployment.
 
 ## Project Structure
 
 ```
 .
+├── .env                    # Environment variables (contains GEMINI_API_KEY)
+├── .gitignore              # Git ignore file
+├── Dockerfile              # Dockerfile for building the container image
 ├── app.py                  # Flask web application
-├── chatbot.py              # Original command-line chatbot script
-├── data
+├── data/
 │   └── db.csv              # CSV data for appointments
 ├── db_setup.py             # Script to create and populate the SQLite database
 ├── requirements.txt        # Python dependencies
-├── static/
 ├── system_prompt.txt       # System prompt for the Gemini model
-├── templates
-│   └── index.html          # HTML template for the chat UI
-└── venv/                     # Virtual environment directory
+└── templates/
+    └── index.html          # HTML template for the chat UI
 ```
 
 ## Setup and Installation
@@ -75,16 +75,22 @@ python3 app.py
 
 Open your web browser and navigate to `http://127.0.0.1:5000` to start chatting.
 
-## Command-Line Chatbot (Optional)
+## Running with Docker
 
-The original command-line version of the chatbot is also available. To use it, run:
+You can also run the application using Docker.
 
-```bash
-python3 chatbot.py <user_id> "<your_question>"
-```
-
-For example:
+### 1. Build the Docker Image
 
 ```bash
-python3 chatbot.py "0014J00000JAuIGQA1" "What are my upcoming appointments?"
+docker build -t assota-chatbot .
 ```
+
+### 2. Run the Docker Container
+
+Make sure to pass your Gemini API key as an environment variable.
+
+```bash
+docker run -p 5000:5000 -e GEMINI_API_KEY="YOUR_API_KEY" assota-chatbot
+```
+
+The application will be accessible at `http://127.0.0.1:5000`.
