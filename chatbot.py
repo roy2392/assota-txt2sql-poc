@@ -15,21 +15,19 @@ def get_user_data(user_id):
 def main():
     # Configure the Gemini API key
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
-    if len(sys.argv) < 3:
-        print("Usage: python chatbot.py <user_id> <question>")
+    try:
+        with open('system_prompt.txt', 'r', encoding='utf-8') as f:
+            system_prompt = f.read()
+    except FileNotFoundError:
+        print("Error: system_prompt.txt not found.")
         return
 
-    user_id = sys.argv[1]
-    user_question = sys.argv[2]
-    user_data = get_user_data(user_id)
+    model = genai.GenerativeModel(
+        'gemini-1.5-flash',
+        system_instruction=system_prompt
+    )
 
-    if not user_data:
-        print("User not found.")
-        return
-
-    prompt = f"Context: The user with user_id {user_id} has the following appointments: {user_data}. Question: {user_question}. Answer:"
+    prompt = f"The user with user_id {user_id} has the following appointments: {user_data}. Question: {user_question}. Answer:"
     response = model.generate_content(prompt)
     print(response.text)
 

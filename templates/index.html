@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -8,50 +7,97 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #d8dbd3;
         }
         .chat-container {
             max-width: 800px;
-            margin: 50px auto;
-            background-color: #fff;
-            border-radius: 15px;
+            margin: 20px auto;
+            background-color: #e5ddd5;
+            border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
         }
         .chat-header {
-            background-color: #007bff;
+            background-color: #005e54;
             color: #fff;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            border-bottom: 1px solid #0056b3;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 15px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .chat-header .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .chat-header .chat-title {
+            font-size: 18px;
+            font-weight: bold;
         }
         .chat-box {
-            height: 400px;
+            flex-grow: 1;
             overflow-y: auto;
             padding: 20px;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: contain;
         }
         .chat-message {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            display: flex;
         }
-        .chat-message .message-bubble {
-            padding: 15px;
-            border-radius: 20px;
-            max-width: 80%;
+        .user-message {
+            justify-content: flex-end;
+        }
+        .bot-message {
+            justify-content: flex-start;
+        }
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 70%;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
         .user-message .message-bubble {
-            background-color: #007bff;
-            color: #fff;
-            margin-right: auto;
+            background-color: #dcf8c6;
+            color: #000;
         }
         .bot-message .message-bubble {
-            background-color: #e9ecef;
+            background-color: #fff;
             color: #333;
-            margin-left: auto;
         }
         .chat-input {
-            padding: 20px;
-            border-top: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #user-id-container {
+            width: 150px; /* Adjust width as needed */
+        }
+        .chat-input input {
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            flex-grow: 1;
+        }
+        .chat-input button {
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            background-color: #005e54;
+            border: none;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -59,19 +105,24 @@
     <div class="container">
         <div class="chat-container">
             <div class="chat-header">
-                Assuta Chatbot
+                <div class="avatar">
+                    <img src="/static/assuta-logo-brand.jpg" alt="Assuta Logo">
+                </div>
+                <div class="chat-title">Assuta Chatbot</div>
             </div>
             <div class="chat-box" id="chat-box">
                 <!-- Chat messages will be appended here -->
             </div>
             <div class="chat-input">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="user-id" placeholder="הכנס מזהה משתמש">
+                <div id="user-id-container">
+                    <input type="text" class="form-control" id="user-id" placeholder="מזהה משתמש">
                 </div>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="user-input" placeholder="כתוב הודעה...">
-                    <button class="btn btn-primary" id="send-btn">שלח</button>
-                </div>
+                <input type="text" class="form-control" id="user-input" placeholder="כתוב הודעה...">
+                <button class="btn btn-primary" id="send-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
