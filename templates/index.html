@@ -114,9 +114,6 @@
                 <!-- Chat messages will be appended here -->
             </div>
             <div class="chat-input">
-                <div id="user-id-container">
-                    <input type="text" class="form-control" id="user-id" placeholder="מזהה משתמש">
-                </div>
                 <input type="text" class="form-control" id="user-input" placeholder="כתוב הודעה...">
                 <button class="btn btn-primary" id="send-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
@@ -128,6 +125,17 @@
     </div>
 
     <script>
+        let sessionId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/start', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    sessionId = data.session_id;
+                    appendMessage('bot', data.response);
+                });
+        });
+
         document.getElementById('send-btn').addEventListener('click', sendMessage);
         document.getElementById('user-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -137,12 +145,9 @@
 
         function sendMessage() {
             const userInput = document.getElementById('user-input');
-            const userId = document.getElementById('user-id');
             const message = userInput.value.trim();
-            const uid = userId.value.trim();
 
-            if (message === '' || uid === '') {
-                alert('נא למלא מזהה משתמש והודעה.');
+            if (message === '' || !sessionId) {
                 return;
             }
 
@@ -154,7 +159,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ user_id: uid, message: message })
+                body: JSON.stringify({ session_id: sessionId, message: message })
             })
             .then(response => response.json())
             .then(data => {

@@ -10,6 +10,10 @@ This project is a simple web-based chatbot that allows users to ask questions in
 -   **Hebrew Language Support:** The chatbot is configured to respond in Hebrew using a system prompt.
 -   **Dockerized:** Includes a Dockerfile for easy containerization and deployment.
 
+## Screenshot
+
+![Assuta Chatbot UI](data/screenshot.png)
+
 ## Project Structure
 
 ```
