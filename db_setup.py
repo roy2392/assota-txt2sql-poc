@@ -1,6 +1,7 @@
 
 import pandas as pd
 import sqlite3
+import random
 
 def setup_database():
     # Read the CSV file into a pandas DataFrame
@@ -47,13 +48,14 @@ def setup_database():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (row['row_id'], row['user_Id'], row['appoitment_type'], str(row['appointment_date_Time__c']), row['appointment_status'], row['cancel_reason_code'], row['record_type'], row['site_name'], row['site_address'], row['site_instructions'], row['guidance_scenario']))
 
-    # Insert unique user_ids into the accounts table
+    # Insert unique user_ids and random names into the accounts table
+    hebrew_names = ["יוסי", "דוד", "משה", "אברהם", "יצחק", "יעקב", "שלמה", "אהרון", "שמואל", "אליהו"]
     unique_user_ids = df['user_Id'].unique()
     for user_id in unique_user_ids:
         cursor.execute('''
         INSERT OR REPLACE INTO accounts (user_id, user_name)
         VALUES (?, ?)
-        ''', (user_id, ''))
+        ''', (user_id, random.choice(hebrew_names)))
 
     # Commit the changes and close the connection
     conn.commit()

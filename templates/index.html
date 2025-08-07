@@ -34,6 +34,8 @@
             margin-left: 15px;
             overflow: hidden;
             background-color: #fff;
+            padding: 5px;
+            box-sizing: border-box;
         }
         .chat-header .avatar img {
             width: 100%;
@@ -75,6 +77,34 @@
             background-color: #fff;
             color: #333;
         }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.3s infinite;
+        }
+        .typing-indicator span:nth-of-type(2) {
+            animation-delay: 0.15s;
+        }
+        .typing-indicator span:nth-of-type(3) {
+            animation-delay: 0.3s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1.0);
+            }
+        }
         .chat-input {
             padding: 10px;
             background-color: #f0f0f0;
@@ -106,7 +136,7 @@
         <div class="chat-container">
             <div class="chat-header">
                 <div class="avatar">
-                    <img src="/static/assuta-logo-brand.jpg" alt="Assuta Logo">
+                    <img src="/static/assuta-logo.jpg" alt="Assuta Logo">
                 </div>
                 <div class="chat-title">Assuta Chatbot</div>
             </div>
@@ -132,7 +162,15 @@
                 .then(response => response.json())
                 .then(data => {
                     sessionId = data.session_id;
-                    appendMessage('bot', data.response);
+                    if (data.responses && Array.isArray(data.responses)) {
+                        data.responses.forEach((message, index) => {
+                            setTimeout(() => {
+                                appendMessage('bot', message);
+                            }, index * 1000); // 1-second delay between messages
+                        });
+                    } else if (data.response) {
+                        appendMessage('bot', data.response);
+                    }
                 });
         });
 
@@ -153,6 +191,7 @@
 
             appendMessage('user', message);
             userInput.value = '';
+            showTypingIndicator();
 
             fetch('/chat', {
                 method: 'POST',
@@ -163,10 +202,12 @@
             })
             .then(response => response.json())
             .then(data => {
+                hideTypingIndicator();
                 appendMessage('bot', data.response);
             })
             .catch(error => {
                 console.error('Error:', error);
+                hideTypingIndicator();
                 appendMessage('bot', 'מצטערים, התרחשה שגיאה.');
             });
         }
@@ -183,6 +224,32 @@
             messageElement.appendChild(bubble);
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById('chat-box');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typing-indicator';
+            typingIndicator.classList.add('chat-message', 'bot-message');
+            
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble');
+            
+            const indicator = document.createElement('div');
+            indicator.classList.add('typing-indicator');
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            
+            bubble.appendChild(indicator);
+            typingIndicator.appendChild(bubble);
+            chatBox.appendChild(typingIndicator);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
         }
     </script>
 </body>
