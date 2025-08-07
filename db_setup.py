@@ -16,6 +16,10 @@ def setup_database():
     conn = sqlite3.connect('app_database.db')
     cursor = conn.cursor()
 
+    # Drop tables if they exist
+    cursor.execute("DROP TABLE IF EXISTS appointments")
+    cursor.execute("DROP TABLE IF EXISTS accounts")
+
     # Create the appointments table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS appointments (
@@ -37,7 +41,8 @@ def setup_database():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS accounts (
         user_id TEXT PRIMARY KEY,
-        user_name TEXT
+        user_name TEXT,
+        age INTEGER
     )
     ''')
 
@@ -53,9 +58,9 @@ def setup_database():
     unique_user_ids = df['user_Id'].unique()
     for user_id in unique_user_ids:
         cursor.execute('''
-        INSERT OR REPLACE INTO accounts (user_id, user_name)
-        VALUES (?, ?)
-        ''', (user_id, random.choice(hebrew_names)))
+        INSERT OR REPLACE INTO accounts (user_id, user_name, age)
+        VALUES (?, ?, ?)
+        ''', (user_id, random.choice(hebrew_names), random.randint(10, 90)))
 
     # Commit the changes and close the connection
     conn.commit()

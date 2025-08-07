@@ -19,7 +19,7 @@ def get_user_data(user_id):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT a.*, u.user_name
+        SELECT a.*, u.user_name, u.age
         FROM appointments a 
         JOIN accounts u ON a.user_id = u.user_id 
         WHERE a.user_id=?
@@ -108,7 +108,7 @@ def chat():
         session['state'] = 'chatting'
         session['model'] = model
         session['history'] = [
-            {"role": "user", "parts": [f"המשתמש (user_id: {user_id}) התחבר. הנה הנתונים שלו: {user_data}"]},
+            {"role": "user", "parts": [f"המשתמש (user_id: {user_id}, age: {user_data[0]['age']}) התחבר. הנה הנתונים שלו: {user_data}"]},
             {"role": "model", "parts": ["שלום! אני הבוט של אסותא. איך אני יכול לעזור?"]}
         ]
         return jsonify({'response': greeting})
