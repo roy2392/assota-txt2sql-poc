@@ -178,7 +178,7 @@
             
             const bubble = document.createElement('div');
             bubble.classList.add('message-bubble');
-            bubble.textContent = message;
+            bubble.innerHTML = message;
             
             messageElement.appendChild(bubble);
             chatBox.appendChild(messageElement);

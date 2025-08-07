@@ -58,7 +58,7 @@ def chat():
             return jsonify({'error': 'System prompt file not found.'}), 500
 
         model = genai.GenerativeModel(
-            'gemini-1.5-flash',
+            'gemini-2.5-flash',
             system_instruction=system_prompt
         )
         
@@ -74,7 +74,8 @@ def chat():
         chat = session["model"].start_chat(history=session["history"])
         response = chat.send_message(user_message)
         session["history"] = chat.history
-        return jsonify({'response': response.text})
+        formatted_response = response.text.replace('*', '<br><br>*')
+        return jsonify({'response': formatted_response})
 
 if __name__ == '__main__':
     app.run(debug=True)
