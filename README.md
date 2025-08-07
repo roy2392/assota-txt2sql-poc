@@ -37,7 +37,46 @@ This project is a simple web-based chatbot that allows users to ask questions in
 
 ```bash
 git clone <repository-url>
-cd assota_txt2sql_poc
+# Assota Text-to-SQL PoC
+
+This is a proof-of-concept for a text-to-SQL chatbot using Google's Gemini API.
+
+## Running the Application
+
+### With Docker
+
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t assota-chatbot .
+    ```
+
+2.  **Run the Docker container:**
+    ```bash
+    docker run -p 5000:5000 -e GEMINI_API_KEY="YOUR_API_KEY" assota-chatbot
+    ```
+    Replace `"YOUR_API_KEY"` with your actual Gemini API key.
+
+3.  Open your browser and navigate to `http://localhost:5000`.
+
+### Locally
+
+1.  **Install the required packages:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Set up the database:**
+    ```bash
+    python db_setup.py
+    ```
+
+3.  **Run the application:**
+    ```bash
+    python app.py
+    ```
+
+4.  Open your browser and navigate to `http://localhost:5000`.
+
 ```
 
 ### 2. Create and Activate a Virtual Environment
