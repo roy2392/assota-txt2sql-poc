@@ -4,6 +4,9 @@ import google.generativeai as genai
 import os
 import re
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -100,7 +103,7 @@ def chat():
             greeting = 'תודה! איך אני יכול לעזור לך היום?'
 
         model = genai.GenerativeModel(
-            'gemini-2.5-flash',
+            'gemini-1.5-flash',
             system_instruction=system_prompt
         )
         
@@ -135,6 +138,9 @@ def chat():
             formatted_response = formatted_response[len('<br>* '):]
 
         return jsonify({'response': formatted_response})
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
