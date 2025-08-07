@@ -41,6 +41,20 @@ git clone <repository-url>
 
 This is a proof-of-concept for a text-to-SQL chatbot using Google's Gemini API.
 
+## Architecture
+
+The application is a Flask-based web server that provides a chat interface for interacting with a Gemini-powered chatbot. The chatbot is designed to answer questions about appointments by querying a local SQLite database.
+
+### Data Flow
+
+1.  **Database Setup:** When the application starts, it checks for the existence of a local SQLite database (`app_database.db`). If the database doesn't exist, it's created and populated with data from a CSV file (`data/appointments_cleaned_for_bigquery.csv`).
+
+2.  **User Interaction:** The user interacts with the chatbot through a simple web interface. When a user starts a new chat, they are prompted to enter their user ID.
+
+3.  **LLM Interaction:** Once the user ID is provided, the application fetches the user's appointment data from the database and sends it to the Gemini API as part of a system prompt. This prompt instructs the Gemini model to act as a helpful assistant and to use the provided data to answer the user's questions.
+
+4.  **Response Generation:** The Gemini model processes the user's questions and the provided data to generate a natural language response. This response is then displayed to the user in the chat interface.
+
 ## Running the Application
 
 ### With Docker
