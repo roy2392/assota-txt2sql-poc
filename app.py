@@ -10,14 +10,14 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure the Gemini API key
+# הגדרת מפתח API של Gemini
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# In-memory chat history
+# זיכרון צ'אט בשרת
 chat_sessions = {}
 
 def get_user_data(user_id):
-    """Fetches user data from the database and returns it as a list of dicts."""
+    """שליפת נתוני המשתמש מה־DB"""
     conn = sqlite3.connect('app_database.db')
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -32,30 +32,77 @@ def get_user_data(user_id):
     return user_data
 
 def find_next_appointment(user_data):
-    """Finds the next upcoming appointment from a list of appointments."""
+    """איתור התור הקרוב ביותר בעתיד"""
     now = datetime.now()
     next_appointment = None
     for appt in user_data:
         appt_date_str = appt.get('appointment_date_Time__c')
-        if appt_date_str:
-            try:
-                appt_date = datetime.strptime(appt_date_str, '%Y-%m-%d %H:%M:%S')
-                if appt_date > now:
-                    if next_appointment is None or appt_date < datetime.strptime(next_appointment.get('appointment_date_Time__c'), '%Y-%m-%d %H:%M:%S'):
-                        next_appointment = appt
-            except ValueError:
-                # Handle cases where the date format is incorrect
-                pass
+        if not appt_date_str:
+            continue
+        try:
+            appt_date = datetime.strptime(appt_date_str, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            continue
+        if appt_date > now:
+            if next_appointment is None:
+                next_appointment = appt
+            else:
+                cur = datetime.strptime(next_appointment.get('appointment_date_Time__c'), '%Y-%m-%d %H:%M:%S')
+                if appt_date < cur:
+                    next_appointment = appt
     return next_appointment
+
+def format_bot_text(text):
+    """המרת טקסט רגיל עם מספור/נקודות ל־HTML <ol>/<ul> עם ניקוי כוכביות"""
+    if not text:
+        return ""
+    if any(tag in text for tag in ("<ol", "<ul", "<li")):
+        return text
+
+    # מסירים כוכביות מיותרות מהטקסט
+    text = text.replace('*', '')
+
+    lines = [ln.strip() for ln in text.splitlines()]
+    lines = [ln for ln in lines if ln]
+
+    if not lines:
+        return ""
+
+    num_re = re.compile(r'^\d+[\.\)]\s+')
+    bullet_re = re.compile(r'^([\-•])\s+')
+
+    num_hits = sum(1 for ln in lines if num_re.match(ln))
+    bullet_hits = sum(1 for ln in lines if bullet_re.match(ln))
+
+    if num_hits >= max(2, len(lines) // 2):
+        items = [num_re.sub('', ln) for ln in lines if num_re.match(ln)]
+        if items:
+            return "<ol>" + "".join(f"<li>{it}</li>" for it in items) + "</ol>"
+
+    if bullet_hits >= max(2, len(lines) // 2):
+        items = [bullet_re.sub('', ln) for ln in lines if bullet_re.match(ln)]
+        if items:
+            return "<ul>" + "".join(f"<li>{it}</li>" for it in items) + "</ul>"
+
+    return "<br>".join(lines)
+
+    # רשימה עם נקודות
+    if bullet_hits >= max(2, len(lines) // 2):
+        items = [bullet_re.sub('', ln) for ln in lines if bullet_re.match(ln)]
+        if items:
+            return "<ul>" + "".join(f"<li>{it}</li>" for it in items) + "</ul>"
+
+    # ברירת מחדל - שבירת שורות
+    return "<br>".join(lines)
 
 @app.route('/')
 def index():
-    """Renders the main chat page."""
+    """עמוד ראשי"""
     return render_template('index.html')
 
 @app.route('/start', methods=['POST'])
 def start_chat():
-    """Starts a new chat session and asks for user ID."""
+    """תחילת שיחה - בקשת ת"ז"""
     session_id = os.urandom(16).hex()
     chat_sessions[session_id] = {'state': 'waiting_for_id', 'history': []}
     
@@ -73,7 +120,7 @@ def start_chat():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Handles chat messages."""
+    """ניהול השיחה"""
     session_id = request.json.get('session_id')
     user_message = request.json.get('message')
 
@@ -85,7 +132,7 @@ def chat():
         return jsonify({'error': 'Invalid session ID.'}), 400
 
     if session['state'] == 'waiting_for_id':
-        user_id = user_message
+        user_id = user_message.strip()
         user_data = get_user_data(user_id)
         if not user_data:
             return jsonify({'response': 'לא מצאתי מטופל עם המזהה הזה. אנא נסה שוב.'})
@@ -96,9 +143,9 @@ def chat():
         except FileNotFoundError:
             return jsonify({'error': 'System prompt file not found.'}), 500
 
-        first_name = user_data[0]['user_name'] if user_data and user_data[0]['user_name'] else None
+        first_name = user_data[0].get('user_name')
         if first_name:
-            greeting = f'שלום {first_name}! אני הבוט של אסותא. איך אני יכול לעזור לך היום?'
+            greeting = f'שלום {first_name}! אני אסי, עוזר ה־AI החדש של אסותא. איך אני יכול לעזור לך היום?'
         else:
             greeting = 'תודה! איך אני יכול לעזור לך היום?'
 
@@ -116,31 +163,23 @@ def chat():
         ]
         return jsonify({'response': greeting})
 
-    elif session['state'] == 'chatting':
-        # Check for intent to find next appointment
-        if "next appointment" in user_message.lower() or "תור קרוב" in user_message:
-            user_data = get_user_data(session['user_id'])
-            next_appointment = find_next_appointment(user_data)
-            if next_appointment:
-                response_text = f"התור הבא שלך הוא ב-{next_appointment['appointment_date_Time__c']} מסוג {next_appointment['appointment_type']}."
-            else:
-                response_text = "לא מצאתי תורים עתידיים."
+    # מצב שיחה פעילה
+    if "next appointment" in user_message.lower() or "תור קרוב" in user_message:
+        user_data = get_user_data(session['user_id'])
+        next_appointment = find_next_appointment(user_data)
+        if next_appointment:
+            response_text = f"התור הבא שלך הוא ב־{next_appointment['appointment_date_Time__c']} מסוג {next_appointment['appointment_type']}."
         else:
-            chat = session["model"].start_chat(history=session["history"])
-            response = chat.send_message(user_message)
-            session["history"] = chat.history
-            response_text = response.text.strip()
+            response_text = "לא מצאתי תורים עתידיים."
+    else:
+        chat = session["model"].start_chat(history=session["history"])
+        response = chat.send_message(user_message)
+        session["history"] = chat.history
+        response_text = response.text.strip()
 
-        # Replace sequences of one or more asterisks (and surrounding whitespace) with a single <br>*
-        formatted_response = re.sub(r'(\s*\*)+', '<br>* ', response_text)
-        # If the response starts with <br>*, remove it
-        if formatted_response.startswith('<br>* '):
-            formatted_response = formatted_response[len('<br>* '):]
-
-        return jsonify({'response': formatted_response})
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    # פורמט אוטומטי לרשימות
+    formatted_response = format_bot_text(response_text)
+    return jsonify({'response': formatted_response})
 
 if __name__ == '__main__':
     app.run(debug=True)
