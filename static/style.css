@@ -9,8 +9,8 @@ body {
 }
 
 .iphone-frame {
-    width: 430px; /* iPhone 16 Pro Max width */
-    height: 896px; /* iPhone 16 Pro Max height */
+    width: 500px; /* iPhone 16 Pro Max width */
+    height: 1042px; /* iPhone 16 Pro Max height */
     background-color: #fff;
     border: 16px solid #000;
     border-radius: 54px;
