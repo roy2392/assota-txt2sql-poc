@@ -203,7 +203,15 @@
             .then(response => response.json())
             .then(data => {
                 hideTypingIndicator();
-                appendMessage('bot', data.response);
+                if (data.responses && Array.isArray(data.responses)) {
+                    data.responses.forEach((message, index) => {
+                        setTimeout(() => {
+                            appendMessage('bot', message);
+                        }, index * 1000); // 1-second delay between messages
+                    });
+                } else if (data.response) {
+                    appendMessage('bot', data.response);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);

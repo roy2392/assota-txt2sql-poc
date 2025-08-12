@@ -95,6 +95,41 @@ def format_bot_text(text):
     # ברירת מחדל - שבירת שורות
     return "<br>".join(lines)
 
+def should_add_followup_question(user_message, response_text):
+    """קובע אם צריך להוסיף שאלת המשך לתשובה"""
+    appointment_keywords = ['תור', 'תורים', 'בדיקה', 'בדיקות', 'appointment', 'המטולוג', 'עיניים', 'גסטרו', 'CT', 'MRI']
+    user_lower = user_message.lower()
+    response_lower = response_text.lower()
+    
+    # בדיקה אם השאלה או התשובה קשורות לתורים
+    user_has_appointment = any(keyword in user_lower for keyword in appointment_keywords)
+    response_has_appointment = any(keyword in response_lower for keyword in appointment_keywords)
+    
+    # לא מוסיפים שאלת המשך אם המשתמש כבר שאל שאלה ספציפית
+    specific_questions = ['איך', 'מה', 'מתי', 'איפה', 'כמה', 'האם', 'הגעה', 'להביא', 'צום', 'הכנה']
+    user_asked_specific = any(q in user_lower for q in specific_questions)
+    
+    return (user_has_appointment or response_has_appointment) and not user_asked_specific
+
+def generate_followup_question(user_message, response_text):
+    """יוצר שאלת המשך מתאימה בהתבסס על התשובה"""
+    user_lower = user_message.lower()
+    response_lower = response_text.lower()
+    
+    # שאלות המשך בהתבסס על סוג התשובה
+    if 'תורים' in response_lower or 'תור' in response_lower:
+        if 'מצאתי' in response_lower and '.' in response_text:
+            return "האם תרצה פרטים נוספים על אחד מהתורים? 📝"
+        elif 'תור הבא' in user_lower:
+            return "יש לך שאלות על ההכנות לבדיקה או הנחיות הגעה? 🗺️"
+        elif any(word in response_lower for word in ['המטולוג', 'בדיקה', 'רופא']):
+            return "האם תרצה לדעת מה להביא לבדיקה או איך להגיע? 📋"
+    
+    if 'לא מצאתי תורים' in response_lower:
+        return "האם תרצה לקבוע תור חדש או לבדוק תורים בתאריך אחר? 📅"
+    
+    return None
+
 @app.route('/')
 def index():
     """עמוד ראשי"""
@@ -130,6 +165,11 @@ def chat():
     session = chat_sessions.get(session_id)
     if not session:
         return jsonify({'error': 'Invalid session ID.'}), 400
+    
+    # Debug: Print session info
+    print(f"Debug - Session ID: {session_id}")
+    print(f"Debug - Session keys: {session.keys()}")
+    print(f"Debug - Current state: {session.get('state')}")
 
     if session['state'] == 'waiting_for_id':
         user_id = user_message.strip()
@@ -158,13 +198,14 @@ def chat():
         session['state'] = 'chatting'
         session['model'] = model
         session['history'] = [
-            {"role": "user", "parts": [f"המשתמש (user_id: {user_id}, age: {user_data[0]['age']}) התחבר. הנה הנתונים שלו: {user_data}"]},
-            {"role": "model", "parts": ["שלום! אני הבוט של אסותא. איך אני יכול לעזור?"]}
+            {"role": "user", "parts": [f"המשתמש (user_id: {user_id}, name: {first_name}, age: {user_data[0]['age']}) התחבר לצ'אט. הנתונים שלו: {user_data}. אל תחזור על השם שלו בתשובות הבאות."]},
+            {"role": "model", "parts": [greeting]}
         ]
+        session['user_name'] = first_name  # Store name separately
         return jsonify({'response': greeting})
 
     # מצב שיחה פעילה
-    if "next appointment" in user_message.lower() or "תור קרוב" in user_message:
+    if "next appointment" in user_message.lower() or "תור קרוב" in user_message or "תור הבא" in user_message:
         user_data = get_user_data(session['user_id'])
         next_appointment = find_next_appointment(user_data)
         if next_appointment:
@@ -172,14 +213,47 @@ def chat():
         else:
             response_text = "לא מצאתי תורים עתידיים."
     else:
+        # Debug: Print session state
+        print(f"Debug - Session state: {session.get('state')}")
+        print(f"Debug - User message: {user_message}")
+        print(f"Debug - History length: {len(session.get('history', []))}")
+        
         chat = session["model"].start_chat(history=session["history"])
         response = chat.send_message(user_message)
         session["history"] = chat.history
         response_text = response.text.strip()
+        
+        # Debug: Print response
+        print(f"Debug - Response: {response_text}")
+        
+        # Post-process to remove unwanted repeated greetings
+        if session.get('user_name'):
+            user_name = session['user_name']
+            greeting_patterns = [f"שלום {user_name}", f"שלום {user_name}!", f"{user_name} שלום"]
+            for pattern in greeting_patterns:
+                if response_text.startswith(pattern):
+                    # Remove the greeting part and continue with the rest
+                    response_text = response_text.replace(pattern, "", 1).strip()
+                    if response_text.startswith("!") or response_text.startswith(","):
+                        response_text = response_text[1:].strip()
+                    print(f"Debug - Removed greeting, new response: {response_text}")
+                    break
 
-    # פורמט אוטומטי לרשימות
+    # בדיקה אם התשובה מכילה מידע על תורים ודורשת שאלת המשך
+    responses = []
     formatted_response = format_bot_text(response_text)
-    return jsonify({'response': formatted_response})
+    responses.append(formatted_response)
+    
+    # הוספת שאלת המשך אוטומטית לתשובות על תורים
+    if should_add_followup_question(user_message, response_text):
+        followup_question = generate_followup_question(user_message, response_text)
+        if followup_question:
+            responses.append(followup_question)
+    
+    if len(responses) == 1:
+        return jsonify({'response': responses[0]})
+    else:
+        return jsonify({'responses': responses})
 
 if __name__ == '__main__':
     app.run(debug=True)
