@@ -118,15 +118,23 @@ def generate_followup_question(user_message, response_text):
     
     # שאלות המשך בהתבסס על סוג התשובה
     if 'תורים' in response_lower or 'תור' in response_lower:
-        if 'מצאתי' in response_lower and '.' in response_text:
+        # If response lists multiple appointments
+        if 'מצאתי' in response_lower and ('1.' in response_text or 'רופא' in response_text):
             return "האם תרצה פרטים נוספים על אחד מהתורים? 📝"
-        elif 'תור הבא' in user_lower:
-            return "יש לך שאלות על ההכנות לבדיקה או הנחיות הגעה? 🗺️"
-        elif any(word in response_lower for word in ['המטולוג', 'בדיקה', 'רופא']):
+        # If it's a single appointment with details
+        elif any(word in response_lower for word in ['המטולוג', 'עיניים', 'שינה', 'ct', 'mri', 'בדיקת']):
             return "האם תרצה לדעת מה להביא לבדיקה או איך להגיע? 📋"
+        # If user asked about next appointment specifically
+        elif 'תור הבא' in user_lower or 'תור קרוב' in user_lower:
+            return "יש לך שאלות על ההכנות לבדיקה או הנחיות הגעה? 🗺️"
     
+    # If no appointments found
     if 'לא מצאתי תורים' in response_lower:
         return "האם תרצה לקבוע תור חדש או לבדוק תורים בתאריך אחר? 📅"
+    
+    # If response contains appointment details/instructions
+    if any(word in response_lower for word in ['הצטייד', 'להביא', 'הכנה', 'הנחיות', 'צום']):
+        return "יש לך עוד שאלות על הבדיקה? 🤔"
     
     return None
 
@@ -226,7 +234,7 @@ def chat():
         # Debug: Print response
         print(f"Debug - Response: {response_text}")
         
-        # Post-process to remove unwanted repeated greetings
+        # Post-process to remove unwanted repeated greetings and follow-up questions
         if session.get('user_name'):
             user_name = session['user_name']
             greeting_patterns = [f"שלום {user_name}", f"שלום {user_name}!", f"{user_name} שלום"]
@@ -237,6 +245,31 @@ def chat():
                     if response_text.startswith("!") or response_text.startswith(","):
                         response_text = response_text[1:].strip()
                     print(f"Debug - Removed greeting, new response: {response_text}")
+                    break
+        
+        # Remove follow-up questions from the main response since we'll add them separately
+        followup_patterns = [
+            "האם תרצה פרטים נוספים על אחד מהתורים?",
+            "יש לך שאלות על ההכנות לבדיקה או הנחיות הגעה?",
+            "האם תרצה לדעת מה להביא לבדיקה או איך להגיע?",
+            "האם תרצה הנחיות הגעה למתקן?",
+            "האם תרצה לקבוע תור חדש או לבדוק תורים בתאריך אחר?",
+            "יש לך שאלות על ההכנות לבדיקה?",
+            "האם תרצה פרטים נוספים על",
+            "יש לך עוד שאלות?",
+            "מה עוד אוכל לעזור לך?"
+        ]
+        
+        original_response = response_text
+        for pattern in followup_patterns:
+            if pattern in response_text:
+                # Remove the follow-up question and any preceding punctuation/line breaks
+                response_text = response_text.replace(pattern, "").strip()
+                response_text = response_text.rstrip("?📝🗺️📋📅").strip()
+                # Clean up multiple line breaks or trailing punctuation
+                response_text = response_text.rstrip("<br>").rstrip("\n").strip()
+                if response_text != original_response:
+                    print(f"Debug - Removed follow-up question from main response")
                     break
 
     # בדיקה אם התשובה מכילה מידע על תורים ודורשת שאלת המשך
