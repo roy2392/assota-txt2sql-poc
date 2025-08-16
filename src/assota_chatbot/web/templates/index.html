@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assuta Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #d8dbd3;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #e5ddd5;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+        .chat-header {
+            background-color: #005e54;
+            color: #fff;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 15px;
+            overflow: hidden;
+            background-color: #fff;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .chat-header .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .chat-header .chat-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: contain;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .user-message {
+            justify-content: flex-end;
+        }
+        .bot-message {
+            justify-content: flex-start;
+        }
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 70%;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+        .user-message .message-bubble {
+            background-color: #dcf8c6;
+            color: #000;
+        }
+        .bot-message .message-bubble {
+            background-color: #fff;
+            color: #333;
+        }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.3s infinite;
+        }
+        .typing-indicator span:nth-of-type(2) {
+            animation-delay: 0.15s;
+        }
+        .typing-indicator span:nth-of-type(3) {
+            animation-delay: 0.3s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1.0);
+            }
+        }
+        .chat-input {
+            padding: 10px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chat-input input {
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            flex-grow: 1;
+        }
+        .chat-input button {
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            background-color: #005e54;
+            border: none;
+            flex-shrink: 0;
+        }
+
+        /* WhatsApp-like Login Screens */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100%;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #e5ddd5 0%, #d8dbd3 100%);
+        }
+        
+        .login-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .back-button:hover {
+            background: #e0e0e0;
+        }
+        
+        .logo-section {
+            margin-bottom: 30px;
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            object-fit: contain;
+            background: white;
+            padding: 10px;
+            border: 3px solid #005e54;
+        }
+        
+        .login-content h2 {
+            color: #005e54;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+        
+        .login-form {
+            margin-top: 30px;
+        }
+        
+        .input-group {
+            text-align: right;
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #005e54;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+            transition: border-color 0.2s;
+            direction: ltr;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #005e54;
+            box-shadow: 0 0 0 3px rgba(0, 94, 84, 0.1);
+        }
+        
+        .input-hint {
+            display: block;
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #005e54;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        
+        .login-btn:hover {
+            background: #007a6a;
+        }
+        
+        /* OTP Screen Specific Styles */
+        .otp-section {
+            padding-top: 20px;
+        }
+        
+        .otp-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        .otp-description {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+        
+        .otp-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .otp-input-container input {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 15px;
+            direction: ltr;
+            transition: border-color 0.2s;
+        }
+        
+        .otp-input-container input:focus {
+            outline: none;
+            border-color: #005e54;
+            box-shadow: 0 0 0 3px rgba(0, 94, 84, 0.1);
+        }
+        
+        .otp-dots {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: none;
+        }
+        
+        .otp-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: background 0.2s;
+        }
+        
+        .demo-note {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+            border-left: 4px solid #005e54;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="avatar">
+                    <img src="/static/assuta-logo.jpg" alt="Assuta Logo">
+                </div>
+                <div class="chat-title">אסי עוזר ה- AI החדש של אסותא</div>
+            </div>
+            <div class="chat-box" id="chat-box">
+                <!-- Step 1: User ID Entry Screen (WhatsApp-like) -->
+                <div id="user-id-container" class="login-screen">
+                    <div class="login-content">
+                        <div class="logo-section">
+                            <img src="/static/assuta-logo.jpg" alt="Assuta Logo" class="login-logo">
+                            <h2>אסי - עוזר ה-AI של אסותא</h2>
+                            <p class="login-subtitle">ברוכים הבאים לשירות הצ'אט החכם שלנו</p>
+                        </div>
+                        
+                        <div class="login-form">
+                            <div class="input-group">
+                                <label for="user-id-input">מזהה מטופל</label>
+                                <input type="text" id="user-id-input" placeholder="0014J00000JAuIGQA1" dir="ltr">
+                                <small class="input-hint">הזן את מזהה המטופל שלך כפי שמופיע במערכת</small>
+                            </div>
+                            <button id="submit-user-id-btn" class="login-btn">
+                                <span>המשך</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: OTP Verification Screen (WhatsApp-like) -->
+                <div id="otp-container" class="login-screen" style="display: none;">
+                    <div class="login-content">
+                        <div class="back-button" id="back-to-user-id-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        
+                        <div class="otp-section">
+                            <div class="otp-icon">🔐</div>
+                            <h2>אימות זהות</h2>
+                            <p class="otp-description">הזן את קוד האימות שנשלח<br>למספר הטלפון הרשום במערכת</p>
+                            
+                            <div class="otp-input-container">
+                                <input type="text" id="otp-input" maxlength="6" dir="ltr">
+                                <div class="otp-dots">
+                                    <span></span><span></span><span></span><span></span>
+                                </div>
+                            </div>
+                            
+                            <p class="demo-note">💡 לצורך הדגמה השתמש בקוד: <strong>1234</strong></p>
+                            
+                            <button id="verify-otp-btn" class="login-btn">
+                                <span>אמת וכנס לצ'אט</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chat messages will be appended here after verification -->
+            </div>
+            <div class="chat-input" id="chat-input-area" style="display: none;">
+                <input type="text" class="form-control" id="user-input" placeholder="כתוב הודעה...">
+                <button class="btn btn-primary" id="send-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                        <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let userId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show user ID form on page load
+            document.getElementById('user-id-container').style.display = 'block';
+            
+            // Step 1: Handle user ID submission
+            document.getElementById('submit-user-id-btn').addEventListener('click', submitUserId);
+            document.getElementById('user-id-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    submitUserId();
+                }
+            });
+            
+            // Step 2: Handle OTP verification
+            document.getElementById('verify-otp-btn').addEventListener('click', verifyOTP);
+            document.getElementById('otp-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    verifyOTP();
+                }
+            });
+            
+            // Back button
+            document.getElementById('back-to-user-id-btn').addEventListener('click', function() {
+                document.getElementById('otp-container').style.display = 'none';
+                document.getElementById('user-id-container').style.display = 'block';
+                document.getElementById('user-id-input').value = '';
+                document.getElementById('otp-input').value = '';
+            });
+            
+            // Only allow numbers in OTP input
+            document.getElementById('otp-input').addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        function submitUserId() {
+            const userIdInput = document.getElementById('user-id-input');
+            const enteredUserId = userIdInput.value.trim();
+            
+            // Basic validation
+            if (!enteredUserId || enteredUserId.length < 5) {
+                alert('אנא הזן מזהה מטופל תקין');
+                return;
+            }
+            
+            // Store user ID for later use
+            userId = enteredUserId;
+            
+            // Move to OTP step
+            document.getElementById('user-id-container').style.display = 'none';
+            document.getElementById('otp-container').style.display = 'block';
+            
+            // Focus on OTP input
+            setTimeout(() => {
+                document.getElementById('otp-input').focus();
+            }, 100);
+        }
+
+        function verifyOTP() {
+            const otpInput = document.getElementById('otp-input');
+            const enteredOTP = otpInput.value.trim();
+            
+            // Validate OTP (simple validation)
+            if (!enteredOTP || enteredOTP.length < 3) {
+                alert('אנא הזן קוד אימות תקין');
+                return;
+            }
+            
+            // For demo purposes, accept any 3+ digit code (you can make it more specific)
+            // In production, this would verify against a real OTP system
+            const validCodes = ['1234', '0000', '1111', '9999', '5555'];
+            
+            if (!validCodes.includes(enteredOTP) && enteredOTP.length < 4) {
+                alert('קוד שגוי. לצורך הדגמה השתמש בקוד: 1234');
+                return;
+            }
+            
+            // Keep the real user_id from step 1 (don't change it)
+            
+            // Start session with user ID
+            fetch('/start', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_id: userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                sessionId = data.session_id;
+                
+                // Hide OTP form and show chat
+                document.getElementById('otp-container').style.display = 'none';
+                document.getElementById('chat-input-area').style.display = 'flex';
+                
+                // Show welcome message
+                if (data.response) {
+                    appendMessage('bot', data.response);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('שגיאה בהתחברות למערכת. אנא נסה שנית.');
+            });
+        }
+
+        // Set up chat functionality after ID verification
+        function setupChatListeners() {
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            document.getElementById('user-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        }
+        
+        // Setup listeners immediately (they'll work once chat is shown)
+        setupChatListeners();
+
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+
+            if (message === '' || !sessionId) {
+                return;
+            }
+
+            appendMessage('user', message);
+            userInput.value = '';
+            showTypingIndicator();
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ session_id: sessionId, message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                appendMessage('bot', data.response);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                appendMessage('bot', 'מצטערים, התרחשה שגיאה.');
+            });
+        }
+
+        function appendMessage(sender, message) {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender + '-message');
+            
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble');
+            bubble.innerHTML = message;
+            
+            messageElement.appendChild(bubble);
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById('chat-box');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typing-indicator';
+            typingIndicator.classList.add('chat-message', 'bot-message');
+            
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble');
+            
+            const indicator = document.createElement('div');
+            indicator.classList.add('typing-indicator');
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            
+            bubble.appendChild(indicator);
+            typingIndicator.appendChild(bubble);
+            chatBox.appendChild(typingIndicator);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+    </script>
+</body>
+</html>

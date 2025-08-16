@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "react_agent": "./working_react_agent.py:graph"
+    "react_agent": "./src/assota_chatbot/agents/workflows/react_agent.py:graph"
   },
   "env": ".env"
 }
