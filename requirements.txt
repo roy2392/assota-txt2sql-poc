@@ -44,3 +44,13 @@ Werkzeug==3.1.3
 python-dotenv
 ruff
 pytest
+
+# LangGraph dependencies
+langgraph
+langchain-core
+langchain-community
+langchain-openai
+
+# Additional dependencies for agent orchestration
+langsmith
+langgraph-cli

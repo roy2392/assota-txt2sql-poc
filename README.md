@@ -1,153 +1,268 @@
-# Assuta Text-to-SQL Chatbot
+# Assota Medical Chatbot - LangGraph React Agent with ClickHouse Integration
 
-This project is a simple web-based chatbot that allows users to ask questions in Hebrew about their appointments. The chatbot uses Google's Gemini API to understand natural language queries and retrieve information from a SQLite database.
+A sophisticated medical chatbot for Assota hospital that combines LangGraph's React (Reasoning and Acting) pattern with ClickHouse MCP (Model Context Protocol) integration to provide intelligent, context-aware responses about patient appointments and medical data.
 
-## Features
+## 🌟 Features
 
--   **Natural Language Understanding:** Uses the Gemini API to interpret user questions.
--   **Database Integration:** Connects to a SQLite database to fetch appointment data.
--   **Web-Based UI:** Provides a simple and clean chat interface using Flask and Bootstrap.
--   **Hebrew Language Support:** The chatbot is configured to respond in Hebrew using a system prompt.
--   **Dockerized:** Includes a Dockerfile for easy containerization and deployment.
+### Core Capabilities
+- **LangGraph React Agent**: Advanced reasoning and acting pattern for complex medical queries
+- **ClickHouse MCP Integration**: Real-time connection to ClickHouse Cloud database
+- **Hebrew Language Support**: Native Hebrew responses for Israeli medical environment
+- **Router Logic**: Intelligent routing between general conversation and medical data queries
+- **User Privacy**: Secure user_id filtering ensures data privacy compliance
+- **LangGraph Studio**: Visual debugging and development interface
 
-## Screenshot
+### Supported Query Types
+- **Appointment Management**: View upcoming appointments, past visits, appointment history
+- **Medical Data**: Access to various medical records and test results
+- **General Conversation**: Small talk and general hospital information
+- **Multi-location Support**: Handles appointments across all Assota locations
 
-![Assuta Chatbot UI](data/screenshot.png)
+## 🏗️ Architecture
 
-## Project Structure
-
+### LangGraph React Agent Flow
 ```
-.
-├── .env                    # Environment variables (contains GEMINI_API_KEY)
-├── .gitignore              # Git ignore file
-├── Dockerfile              # Dockerfile for building the container image
-├── app.py                  # Flask web application
-├── data/
-│   └── db.csv              # CSV data for appointments
-├── db_setup.py             # Script to create and populate the SQLite database
-├── requirements.txt        # Python dependencies
-├── system_prompt.txt       # System prompt for the Gemini model
-└── templates/
-    └── index.html          # HTML template for the chat UI
+User Query → Router → [Medical Data Query | General Conversation]
+     ↓              ↓                    ↓
+   Hebrew      ClickHouse MCP      Direct Response
+  Response    ← SQL Generation              ↓
+     ↑              ↓              Hebrew Response
+Final Answer ← Data Processing
 ```
 
-## Setup and Installation
+### Key Components
+- **`working_react_agent.py`**: Main LangGraph React agent with ClickHouse integration
+- **`clickhouse_mcp_proper.py`**: Async MCP client for ClickHouse connectivity  
+- **`langgraph.json`**: LangGraph Studio configuration
+- **`app_langgraph.py`**: Flask web interface for the agent
+- **`clickhouse_mcp_agent.py`**: Alternative MCP implementation
 
-### 1. Clone the Repository
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.11+
+- OpenAI API key
+- ClickHouse Cloud access
+- uv package manager
+
+### 1. Environment Setup
+
+Create `.env` file:
+```env
+# OpenAI Configuration
+OPENAI_API_KEY="your-openai-api-key"
+
+# ClickHouse Cloud Configuration  
+CLICKHOUSE_HOST=your-clickhouse-host.clickhouse.cloud
+CLICKHOUSE_PORT=8443
+CLICKHOUSE_USER=default
+CLICKHOUSE_PASSWORD=your-password
+CLICKHOUSE_SECURE=true
+CLICKHOUSE_VERIFY=true
+CLICKHOUSE_CONNECT_TIMEOUT=30
+CLICKHOUSE_SEND_RECEIVE_TIMEOUT=30
+
+# LangSmith (Optional)
+LANGCHAIN_TRACING_V2=true
+LANGSMITH_API_KEY="your-langsmith-key"
+LANGCHAIN_PROJECT=assota-txt2sql-poc
+```
+
+### 2. Install Dependencies
 
 ```bash
-git clone <repository-url>
-# Assota Text-to-SQL PoC
-
-This is a proof-of-concept for a text-to-SQL chatbot using Google's Gemini API.
-
-## Architecture
-
-The application is a Flask-based web server that provides a chat interface for interacting with a Gemini-powered chatbot. The chatbot is designed to answer questions about appointments by querying a local SQLite database.
-
-### Data Flow
-
-1.  **Database Setup:** When the application starts, it checks for the existence of a local SQLite database (`app_database.db`). If the database doesn't exist, it's created and populated with data from a CSV file (`data/appointments_cleaned_for_bigquery.csv`).
-
-2.  **User Interaction:** The user interacts with the chatbot through a simple web interface. When a user starts a new chat, they are prompted to enter their user ID.
-
-3.  **LLM Interaction:** Once the user ID is provided, the application fetches the user's appointment data from the database and sends it to the Gemini API as part of a system prompt. This prompt instructs the Gemini model to act as a helpful assistant and to use the provided data to answer the user's questions.
-
-4.  **Response Generation:** The Gemini model processes the user's questions and the provided data to generate a natural language response. This response is then displayed to the user in the chat interface.
-
-## Running the Application
-
-### With Docker
-
-1.  **Build the Docker image:**
-    ```bash
-    docker build -t assota-chatbot .
-    ```
-
-2.  **Run the Docker container:**
-    ```bash
-    docker run -p 5000:5000 -e GEMINI_API_KEY="YOUR_API_KEY" assota-chatbot
-    ```
-    Replace `"YOUR_API_KEY"` with your actual Gemini API key.
-
-3.  Open your browser and navigate to `http://localhost:5000`.
-
-### Locally
-
-1.  **Install the required packages:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2.  **Set up the database:**
-    ```bash
-    python db_setup.py
-    ```
-
-3.  **Run the application:**
-    ```bash
-    python app.py
-    ```
-
-4.  Open your browser and navigate to `http://localhost:5000`.
-
-```
-
-### 2. Create and Activate a Virtual Environment
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-
-```bash
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install LangGraph CLI with memory support
+pip install "langgraph-cli[inmem]>=0.3.6"
+
+# Install ClickHouse MCP
+uv add mcp-clickhouse
 ```
 
-### 4. Set Up the Database
-
-Run the `db_setup.py` script to create the `app_database.db` file from the CSV data.
+### 3. Run LangGraph Studio
 
 ```bash
-python3 db_setup.py
+# Start the development server
+langgraph dev
+
+# Open LangGraph Studio
+# Navigate to http://localhost:8123
 ```
 
-### 5. Configure the API Key
+### 4. Test the Agent
 
-Create a `.env` file in the root directory and add your Gemini API key:
-
+In LangGraph Studio, test with:
+```json
+{
+  "user_input": "מה התורים שלי?",
+  "user_id": "your-user-id",
+  "messages": [],
+  "thought": "",
+  "action": "",
+  "action_input": "",
+  "observation": "",
+  "final_answer": "",
+  "iteration": 0
+}
 ```
-GEMINI_API_KEY="YOUR_API_KEY"
+
+## 🔧 Development
+
+### Project Structure
+```
+├── working_react_agent.py      # Main LangGraph React agent
+├── clickhouse_mcp_proper.py    # Async MCP ClickHouse client
+├── langgraph.json              # LangGraph Studio config
+├── app_langgraph.py            # Flask web interface
+├── clickhouse_mcp_agent.py     # Alternative MCP implementation
+├── langgraph_config.py         # LangGraph configuration
+├── requirements.txt            # Python dependencies
+├── pyproject.toml              # Project configuration
+└── .env                        # Environment variables
 ```
 
-## Running the Application
+### Key Files
 
-To start the Flask web server, run:
+#### `working_react_agent.py`
+The main React agent that:
+- Routes queries between conversation and medical data
+- Generates SQL queries with proper user_id filtering
+- Manages async ClickHouse MCP sessions
+- Provides Hebrew responses
+
+#### `clickhouse_mcp_proper.py`
+Async MCP client that:
+- Handles ClickHouse Cloud connections
+- Executes SQL queries via MCP protocol
+- Manages session lifecycle properly
+
+### Running Tests
 
 ```bash
-python3 app.py
+# Test the React agent directly
+python working_react_agent.py
+
+# Test ClickHouse connectivity
+python clickhouse_mcp_proper.py
 ```
 
-Open your web browser and navigate to `http://127.0.0.1:5000` to start chatting.
+## 🌐 Web Interface
 
-## Running with Docker
-
-You can also run the application using Docker.
-
-### 1. Build the Docker Image
+### Flask Application
 
 ```bash
-docker build -t assota-chatbot .
+# Run the web interface
+python app_langgraph.py
+
+# Access at http://localhost:5000
 ```
 
-### 2. Run the Docker Container
-
-Make sure to pass your Gemini API key as an environment variable.
+### Docker Deployment
 
 ```bash
-docker run -p 5000:5000 -e GEMINI_API_KEY="YOUR_API_KEY" assota-chatbot
+# Build image
+docker build -t assota-langgraph-chatbot .
+
+# Run container
+docker run -p 5000:5000 --env-file .env assota-langgraph-chatbot
 ```
 
-The application will be accessible at `http://127.0.0.1:5000`.
+## 🔒 Security & Privacy
+
+### Data Protection
+- **User ID Filtering**: All SQL queries include mandatory `WHERE user_id = 'user_id'` clauses
+- **Query Validation**: Prevents SQL injection and unauthorized data access
+- **Environment Variables**: Sensitive credentials stored securely in `.env`
+
+### ClickHouse Security
+- TLS encryption for all connections
+- Certificate verification enabled
+- Timeout configurations for connection management
+
+## 📊 Database Schema
+
+### ClickHouse Table: `appointments_cleaned_for_bigquery`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `user_id` | String | Patient identifier (mandatory filter) |
+| `appointment_date_time_c` | DateTime64 | Appointment date and time |
+| `appoitment_type` | String | Type of appointment (note: missing 'n') |
+| `appointment_status` | String | Current status |
+| `site_name` | String | Hospital location |
+| `site_address` | String | Full address |
+| `record_type` | String | Record classification |
+
+## 🎯 Usage Examples
+
+### Medical Data Queries (Hebrew)
+- `"מה התורים שלי?"` - "What are my appointments?"
+- `"תורים קרובים"` - "Upcoming appointments"  
+- `"היסטוריית רפואית"` - "Medical history"
+
+### General Conversation (Hebrew)
+- `"שלום"` - "Hello"
+- `"איך אני יכול לעזור?"` - "How can I help?"
+- `"מידע על בית החולים"` - "Hospital information"
+
+## 🔧 Configuration
+
+### LangGraph Studio Settings
+
+The `langgraph.json` file configures:
+```json
+{
+  "python_path": "working_react_agent.py",
+  "graph_id": "react_agent",
+  "config": {
+    "env_file": ".env"
+  }
+}
+```
+
+### OpenAI Model Configuration
+- Model: `gpt-4o-mini`
+- Temperature: `0.1` (for consistent medical responses)
+- Hebrew language optimization
+
+## 🚀 Deployment
+
+### Production Considerations
+1. **Environment Variables**: Ensure all credentials are properly configured
+2. **ClickHouse Performance**: Monitor query performance and connection pooling
+3. **LangSmith Monitoring**: Enable tracing for production debugging
+4. **Error Handling**: Comprehensive error handling for MCP connections
+
+### Scaling
+- **Async Architecture**: Built for concurrent user sessions
+- **Connection Management**: Proper MCP session lifecycle management
+- **Caching**: Consider implementing query result caching for common requests
+
+## 🔍 Monitoring & Debugging
+
+### LangGraph Studio
+- Visual workflow debugging
+- Step-by-step execution tracing
+- Real-time state inspection
+
+### LangSmith Integration
+- Request/response logging
+- Performance analytics
+- Error tracking and analysis
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Test with LangGraph Studio
+4. Submit a pull request
+
+## 📄 License
+
+This project is part of Assota hospital's digital transformation initiative.
+
+---
+
+**Built with ❤️ for Assota Medical Center using LangGraph + ClickHouse MCP**
