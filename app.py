@@ -288,5 +288,8 @@ def chat():
     else:
         return jsonify({'responses': responses})
 
+# For Vercel deployment
+app = app
+
 if __name__ == '__main__':
     app.run(debug=True)
