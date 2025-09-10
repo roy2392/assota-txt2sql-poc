@@ -3,7 +3,6 @@ __pycache__
 .git
 .github
 .vercel
-*.db
 data/
 tests/
 test_*.py

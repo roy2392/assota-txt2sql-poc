@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime
 from dotenv import load_dotenv
+import shutil
 
 load_dotenv()
 
@@ -13,12 +14,25 @@ app = Flask(__name__)
 # הגדרת מפתח API של Gemini
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
+# Determine database path - works both locally and on Vercel
+if os.path.exists('/tmp'):
+    # On Vercel, use /tmp directory
+    DB_PATH = '/tmp/app_database.db'
+    # Copy database to /tmp if it doesn't exist there
+    if not os.path.exists(DB_PATH):
+        local_db = os.path.join(os.path.dirname(__file__), 'app_database.db')
+        if os.path.exists(local_db):
+            shutil.copy2(local_db, DB_PATH)
+else:
+    # Local development
+    DB_PATH = 'app_database.db'
+
 # זיכרון צ'אט בשרת
 chat_sessions = {}
 
 def get_user_data(user_id):
     """שליפת נתוני המשתמש מה־DB"""
-    conn = sqlite3.connect('app_database.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
