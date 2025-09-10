@@ -12,6 +12,5 @@ README.md
 Dockerfile
 .dockerignore
 .ruff.toml
-requirements.txt
 ruff
 pytest
